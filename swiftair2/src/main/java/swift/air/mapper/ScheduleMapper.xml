@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="swift.air.mapper.ScheduleMapper">
+	<insert id="insertSchedule">
+		<selectKey resultType="String" keyProperty="scheduleId" order="BEFORE">
+			select schedule_seq.nextval from dual
+		</selectKey>
+		insert into schedule (schedule_id, schedule_Departure_date, schedule_arrival_date, schedule_flight, schedule_route_id)
+         select #{scheduleId}, #{scheduleDepartureDate}, #{scheduleArrivalDate}, #{routeFlight}, #{routeId}
+         from route where route_flight = #{routeFlight}
+	</insert>
+	
+	<update id="updateSchedule">
+		update schedule set schedule_departure_date=#{scheduleDepartureDate}, schedule_arrival_date=#{scheduleArrivalDate}
+			, schedule_flight=#{scheduleFlight} where schedule_id=#{scheduleId}
+	</update>
+	
+	<delete id="deleteSchedule">
+		delete from schedule where schedule_id=#{scheduleId}
+	</delete>
+	
+	<select id="selectSchedule" resultType="Schedule"> 
+		select schedule_id, schedule_flight, route_departure, route_destination, route_time
+			, route_price, schedule_departure_date, schedule_arrival_date 
+			from schedule join route on schedule_route_id=route_id where schedule_id=#{scheduleId}
+	</select>
+
+	<select id="selectScheduleByFlight" resultType="Schedule"> 
+		select route_departure, route_destination, route_time, route_price 
+			from schedule join route on schedule_route_id=route_id where schedule_flight=#{scheduleFlight}
+	</select>
+	 
+	<select id="selectScheduleCount" resultType="int">
+		select count(*) from schedule
+	</select>
+	
+	<select id="selectScheduleList" resultType="Schedule">
+		select * from (select rownum rn, schedulelist.* from (select schedule_id, schedule_flight
+			, route_departure, schedule_route_id, route_destination, route_time, route_price, schedule_departure_date, schedule_arrival_date
+			from schedule join route on schedule_route_id=route_id order by schedule_id desc)
+			schedulelist) where rn between #{startRow} and #{endRow}
+	</select>
+	
+	<select id="findSchedule" resultType="Schedule">
+		<![CDATA[
+		select schedule_id, schedule_flight, route_departure
+			, route_destination, route_time, route_price, schedule_departure_date, schedule_arrival_date
+			 from ( 
+			select schedule_id, schedule_flight, route_departure, route_destination
+				, route_time, route_price, schedule_departure_date, schedule_arrival_date from (select 
+				schedule_id, schedule_flight, route_departure, route_destination, route_time, route_price
+				, schedule_departure_date, schedule_arrival_date
+				 from schedule join route on schedule_route_id=route_id 
+				 where route_departure =#{param1} and route_destination = #{param2} 
+				 and schedule_departure_date=#{param3}) 
+				 join passenger on passenger_schedule_id = schedule_id where schedule_id=(select 
+				 schedule_id from schedule join route on schedule_route_id=route_id 
+				 where route_departure =#{param1} and route_destination = #{param2} 
+				 and schedule_departure_date=#{param3} and rownum=1)
+			) where rownum=1
+          ]]>
+	</select>
+	
+	<select id="scheduleCount1" resultType="int" parameterType="Schedule">
+		<![CDATA[
+		select count(*) from (select passenger_seat_name, seat_grade from 
+			(select schedule_id from schedule join route on schedule_route_id = route_id 
+			where route_departure = #{param1} and route_destination = #{param2} 
+			and schedule_departure_date = #{param3}) 
+			join passenger on passenger_schedule_id = schedule_id join seat 
+			on seat_name = passenger_seat_name) where seat_grade='이코노미35'
+		]]>
+	</select>
+	<select id="scheduleCount2" resultType="int" parameterType="Schedule">
+		<![CDATA[
+		select count(*) from (select passenger_seat_name, seat_grade from 
+			(select schedule_id from schedule join route on schedule_route_id = route_id 
+			where route_departure = #{param1} and route_destination = #{param2} 
+			and schedule_departure_date = #{param3}) 
+			join passenger on passenger_schedule_id = schedule_id join seat 
+			on seat_name = passenger_seat_name) where seat_grade='프레미아42'
+		]]>
+	</select>
+	
+	<select id="arrivalSchedule" parameterType="Schedule">
+		<![CDATA[
+		
+			select route_time, route_flight, route_price, route_departure, route_destination 
+			from route where route_departure=#{param2} and route_destination=#{param1}
+		
+		]]>
+	</select>
+	
+</mapper>

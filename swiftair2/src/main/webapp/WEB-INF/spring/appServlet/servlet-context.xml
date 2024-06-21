@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/mvc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc https://www.springframework.org/schema/mvc/spring-mvc.xsd
+		http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/aop https://www.springframework.org/schema/aop/spring-aop.xsd
+		http://www.springframework.org/schema/tx https://www.springframework.org/schema/tx/spring-tx.xsd">
+
+	<!-- DispatcherServlet Context: defines this servlet's request-processing infrastructure -->
+	
+	<!-- Enables the Spring MVC @Controller programming model -->
+	<!-- annotation-driven : @Controller 어노테이션으로 등록된 Spring Bean을 Controller 클래스로
+	동작되는 기능을 제공하는 엘리먼트 -->
+	<!-- => @Controller 어노테이션을 사용한 Controller 클래스의 메소드에 @RequestMapping 어노테이션을
+	사용하여 클라이언트의 요청을 처리하는 요청 처리 메서드로 작성 -->
+	<!-- => @RequestMapping 어노테이션을 사용하면 HandlerMapping 객체를 사용하지 않아도 클라이언트
+	요청에 의해 요청 처리 클래스의 메소드가 호출되도록 처리 -->
+	<annotation-driven />
+	
+	<resources mapping="/img/**" location="/resources/assets/img/" />
+	<resources mapping="/css/**" location="/resources/assets/css/" />
+	<resources mapping="/js/**" location="/resources/assets/js/" />
+	<resources mapping="/plugins/**" location="/resources/assets/plugins/" />
+
+	<resources mapping="/img_a/**" location="/resources/assets_admin/img/" />
+	<resources mapping="/css_a/**" location="/resources/assets_admin/css/" />
+	<resources mapping="/js_a/**" location="/resources/assets_admin/js/" />
+	<resources mapping="/plugins_a/**" location="/resources/assets_admin/plugins/" />
+
+	<!-- Resolves views selected for rendering by @Controllers to .jsp resources in the /WEB-INF/views directory -->
+	<beans:bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<beans:property name="prefix" value="/WEB-INF/views/" />
+		<beans:property name="suffix" value=".jsp" />
+		<beans:property name="order" value="3"/>
+	</beans:bean>
+	
+	<!-- UrlBasedViewResolver 클래스를 Spring Bean으로 등록 -->
+	<!-- => UrlBasedViewResolver 객체 : 클라이언트 요청에 의해 호출되는 요청 처리 메소드의 
+	반환값(ViewName)을 Spring 프레임워크에서 제공하는 ViewResolver 객체가 아닌 외부의 
+	ViewResolver 객체로 응답 처리하기 위한 기능을 제공하는 ViewResolver 객체 -->
+	<!-- => 뷰이름으로 응답 처리하기 위한 ViewResolver 객체를 커스터마이징(Customizing) 할 때 사용하는 객체 -->
+	<beans:bean class="org.springframework.web.servlet.view.UrlBasedViewResolver">
+		<!-- viewClass 필드에 ViewResolver 기능을 제공할 클래스가 저장되도록 값 주입 -->
+		<beans:property name="viewClass" value="org.springframework.web.servlet.view.tiles3.TilesView"/>
+		<!-- order 필드에 ViewResolver 객체의 우선순위를 설정하기 위한 정수값 주입 -->
+		<!-- => ViewResolver 객체가 여러개 등록되어 있는 경우 반드시 설정 -->
+		<!-- => 필드에 저장된 정수값이 작을수록 우선순위가 높게 설정 -->
+		<beans:property name="order" value="2"/>
+	</beans:bean>
+	
+	<!-- TilesConfigurer 클래스를 Spring Bean으로 등록 -->
+	<!-- => TilesConfigurer 객체 : 요청 처리 메소드의 반환값(ViewName)으로 TilesView 객체가 
+	응답하기 위한 정보를 저장된 환경설정파일을 제공하기 위한 객체 -->
+	<beans:bean class="org.springframework.web.servlet.view.tiles3.TilesConfigurer">
+		<!-- definitions 필드에 List 객체를 생성하여 저장되도록 의존성 주입 -->
+		<!-- => List 객체의 요청에는 TilesView 객체가 사용할 환경설정파일의 경로가 저장되도록 설정 -->
+		<beans:property name="definitions">
+			<beans:list>
+				<beans:value>/WEB-INF/spring/appServlet/tiles.xml</beans:value>
+			</beans:list>
+		</beans:property>	
+	</beans:bean>
+	
+	<!-- <context:component-scan base-package="xyz.itwill.spring" /> -->
+	<context:component-scan base-package="swift.air.controller" />
+	<context:component-scan base-package="swift.air.dao" />
+	<context:component-scan base-package="swift.air.service" />
+
+	<!--  메세지 관리 기능을 제공하는 클래스(ReloadableResourceBundleMessageSource)를 Spring Bean으로 등록 -->
+	<!-- => Spring Bean의 식별자(beanName)을 반드시 [messageSource]로 설정 -->	
+	<beans:bean class="org.springframework.context.support.ReloadableResourceBundleMessageSource" id="messageSource">
+		<!-- basenames 필드에는 List 객체를 생성하여 저장되도록 의존성 주입 -->
+		<!-- => List 객체의 요소에는 메세지가 저장된 Properties 파일의 경로를 저장 -->
+		<!-- => Properties 파일 -->
+		<beans:property name="basenames">
+			<beans:list>
+				<!-- [src/main/webapp] 폴더에 작성된 Properties 파일을 참조 -->
+				<!-- => Properties 파일이 변경되면 자동으로 변경된 메세지 적용 -->
+				<!-- <beans:value>/WEB-INF/message/label</beans:value> -->
+	
+				<!-- [src/main/java] 또는 [src/main/resources] 폴더에 Properties 파일을 작성한 
+				경우 classpath 접두사를 사용하여 Properties 파일에 참조 -->
+				<!-- => Properties 파일이 변경되면 WAS 프로그램을 반드시 재실행해야 변경된 메세지 적용 -->
+				<beans:value>classpath:message/label</beans:value>
+				
+				<beans:value>/WEB-INF/message/error</beans:value>
+			</beans:list>
+		</beans:property>
+		<!-- cacheSeconds 필드에 Properties 파일을 읽어 메모리에 로딩하기 위한 시간(초)이 저장되도록 값 주입 -->
+		<beans:property name="cacheSeconds" value="60"/>
+		<!-- defaultEncoding 필드에 Properties 파일의 문자형태(캐릭터셋)을 저장되도록 값 주입 -->
+		<beans:property name="defaultEncoding" value="utf-8"/>
+	</beans:bean>
+	
+	<!-- 세션 속성값으로 저장된 Locale 객체를 사용해 메세지를 제공하는 기능의 클래스를 Spring Bean으로 등록 -->
+	<beans:bean class="org.springframework.web.servlet.i18n.SessionLocaleResolver" id="localeResolver">
+		<!-- defaultLocale 필드에 기본적으로 사용될 언어가 저장되도록 값 주입 -->
+		<beans:property name="defaultLocale" value="ko"/>
+	</beans:bean>
+	
+	<!-- [multipart/form-data] 형태로 전달된 값과 파일을 처리하기 위한 기능을 제공하는 
+	클래스를 Spring Bean으로 등록 -->
+	<!-- => Spring Bean의 식별자(beanName)를 반드시 [multipartResolver]로 설정 -->	
+	<beans:bean class="org.springframework.web.multipart.commons.CommonsMultipartResolver" id="multipartResolver">
+		<!-- maxUploadSize 필드에 최대 업로드 처리 가능한 파일의 제한 용량이 저장되도록 값 주입 -->
+		<beans:property name="maxUploadSize" value="20971520"/>
+		<!-- defaultEncoding 필드에 전달값에 대한 문자형태(캐릭터셋)가 저장되도록 값 주입 -->
+		<beans:property name="defaultEncoding" value="utf-8"/>
+	</beans:bean>
+</beans:beans>
